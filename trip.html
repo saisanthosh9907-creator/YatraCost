@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>YatraCost — Trip Cost Calculator (INR + Map & GPS)</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"/>
+
+<style>
+  :root{
+    --bg-start:#0f172a; --bg-end:#1e293b; --card:#0b1220ee; --accent:#22c55e;
+    --muted:#94a3b8; --text:#e5e7eb; --ring:#334155; --danger:#ef4444; --shadow:0 10px 30px rgba(2,6,23,.35); --radius:16px;
+  }
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;font-family:"Inter",system-ui,Segoe UI,Roboto,Arial;color:var(--text);
+    background: radial-gradient(1200px 800px at 20% -10%, #0ea5e933 0, transparent 60%),
+                radial-gradient(1200px 800px at 120% 110%, #22c55e33 0, transparent 60%),
+                linear-gradient(160deg, var(--bg-start), var(--bg-end));}
+  .wrap{max-width:1100px;margin:48px auto 80px;padding:0 20px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#0ea5e9);box-shadow:var(--shadow)}
+  h1{font-size:clamp(22px,3vw,28px);margin:0}
+  .sub{color:var(--muted);font-size:14px}
+  .badge{padding:4px 10px;border:1px solid #33415588;border-radius:999px}
+  .card{background:var(--card);border:1px solid #0b122055;backdrop-filter:blur(10px);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .grid{display:grid;grid-template-columns:1fr;gap:16px}
+  @media (min-width: 980px){.grid{grid-template-columns:6fr 4fr}}
+  form{padding:20px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .field{display:flex;flex-direction:column;gap:8px}
+  label{font-weight:600;font-size:13px;color:#cbd5e1}
+  input,select,button{font-family:inherit}
+  input,select{background:#0b1220;color:var(--text);border:1px solid var(--ring);border-radius:12px;padding:12px 14px;outline:none}
+  input:focus,select:focus{border-color:#22c55e88;box-shadow:0 0 0 4px #22c55e22}
+  .hint{font-size:12px;color:var(--muted)}
+  .flex{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .btn{background:linear-gradient(135deg,#22c55e,#16a34a);color:#08121a;font-weight:700;border:none;padding:12px 16px;border-radius:12px;cursor:pointer;transition:transform .06s ease,filter .2s ease}
+  .btn:active{transform:translateY(1px)} .btn.secondary{background:#0b1220;color:var(--text);border:1px solid var(--ring)}
+  .iconbtn{padding:10px 12px;border-radius:10px;border:1px solid var(--ring);background:#0b1220;color:var(--text);cursor:pointer}
+  .results{padding:20px}
+  .results h2{font-size:18px;margin:0 0 10px}
+  .stat{display:grid;grid-template-columns:1fr auto;gap:8px;padding:12px 0;border-top:1px dashed #33415577}
+  .stat:first-of-type{border-top:none}
+  .value{font-weight:800} .mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+  .error{color:var(--danger);font-size:13px;margin-top:-4px}
+  #map{height:380px;border-radius:16px;border:1px solid #0b122055;margin:14px 20px 20px}
+  footer{margin-top:24px;text-align:center;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>YatraCost</h1>
+        <div class="sub">Simple trip cost calculator — <span class="badge">INR • Map • GPS</span></div>
+      </div>
+    </div>
+    <button class="btn secondary" id="themeBtn">Switch theme</button>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <form id="calcForm" novalidate>
+        <div class="row">
+          <div class="field">
+            <label for="from">From</label>
+            <div class="flex">
+              <input id="from" placeholder="e.g., Hyderabad" style="flex:1">
+              <button type="button" id="useGps" class="iconbtn" title="Use my location">📍 GPS</button>
+              <button type="button" id="swap" class="iconbtn" title="Swap">⇅</button>
+            </div>
+            <div class="hint" id="fromHint">Click 📍 to use your current location.</div>
+          </div>
+          <div class="field">
+            <label for="to">To</label>
+            <input id="to" placeholder="e.g., Bengaluru">
+            <div class="hint">Type a city/place, then “Find Route”.</div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <div class="field">
+            <label for="mode">Mode</label>
+            <select id="mode">
+              <option value="car" selected>Driving (Car)</option>
+              <option value="bike">Driving (Bike)</option>
+              <option value="fly">Flying (Estimate)</option>
+            </select>
+            <div class="hint">Driving uses fuel+mileage; Flying uses ₹/km × legs.</div>
+          </div>
+          <div class="field">
+            <label for="distance">Distance (km) <span class="hint">(auto from map or enter)</span></label>
+            <input id="distance" type="number" min="1" step="0.1" placeholder="e.g., 570" required>
+            <div class="error" id="distanceErr" hidden>Enter a distance in km (or click “Find Route”).</div>
+          </div>
+        </div>
+
+        <!-- Driving options -->
+        <div id="drivingFields" style="margin-top:12px">
+          <div class="row-3">
+            <div class="field">
+              <label for="mileage">Mileage (km/L)</label>
+              <input id="mileage" type="number" min="1" step="0.1" value="18">
+            </div>
+            <div class="field">
+              <label for="fuel">Fuel price (₹/L)</label>
+              <input id="fuel" type="number" min="1" step="0.1" value="110">
+            </div>
+            <div class="field">
+              <label for="speed">Avg speed (km/h)</label>
+              <input id="speed" type="number" min="10" step="1" value="60">
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:12px">
+            <div class="field">
+              <label for="tollPerKm">Toll estimate (₹/km)</label>
+              <input id="tollPerKm" type="number" min="0" step="0.1" value="1.5">
+              <div class="hint">Approx NH toll average. Set 0 to ignore.</div>
+            </div>
+            <div class="field">
+              <label for="travellers">Travellers</label>
+              <input id="travellers" type="number" min="1" step="1" value="2">
+            </div>
+          </div>
+        </div>
+
+        <!-- Flying options -->
+        <div id="flyingFields" style="display:none; margin-top:12px">
+          <div class="row-3">
+            <div class="field">
+              <label for="tickets">Passengers</label>
+              <input id="tickets" type="number" min="1" step="1" value="1">
+            </div>
+            <div class="field">
+              <label for="farePerKm">Avg fare (₹/km)</label>
+              <input id="farePerKm" type="number" min="1" step="0.1" value="6.5">
+            </div>
+            <div class="field">
+              <label for="isReturn">Trip Type</label>
+              <select id="isReturn">
+                <option value="one">One-way</option>
+                <option value="return" selected>Return</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex" style="margin-top:16px">
+          <button class="btn" type="button" id="routeBtn">Find Route & Fill Distance</button>
+          <button class="btn" type="submit">Calculate (₹)</button>
+          <button class="btn secondary" type="button" id="resetBtn">Reset</button>
+          <span class="hint">Map: OpenStreetMap • Routing: OSRM • Geocoding: Nominatim</span>
+        </div>
+      </form>
+
+      <div id="map" class="card"></div>
+    </section>
+
+    <aside class="card">
+      <div class="results">
+        <h2>Result</h2>
+        <div id="routeLine" class="hint" style="margin-bottom:8px">Enter places and click “Find Route”.</div>
+
+        <div id="resultWrap" hidden>
+          <div class="stat">
+            <div>Total cost</div>
+            <div class="value mono" id="totalCost">₹0</div>
+          </div>
+          <div class="stat">
+            <div>Per person</div>
+            <div class="value mono" id="perPerson">₹0</div>
+          </div>
+          <div class="stat" id="fuelBlock">
+            <div>Fuel needed</div>
+            <div class="value mono" id="fuelNeeded">0 L</div>
+          </div>
+          <div class="stat" id="timeBlock">
+            <div>Est. drive time</div>
+            <div class="value mono" id="driveTime">0 h</div>
+          </div>
+          <div class="stat">
+            <div>Breakup</div>
+            <div class="mono" id="breakup">—</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    Built for INR. You can rename the site by editing the <code>&lt;title&gt;</code> and heading.
+  </footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+<script>
+(function(){
+  const $ = (id)=>document.getElementById(id);
+
+  // ------- Fields / Outputs -------
+  const fields = {
+    from: $('from'), to: $('to'), mode: $('mode'), distance: $('distance'),
+    mileage: $('mileage'), fuel: $('fuel'), speed: $('speed'),
+    tollPerKm: $('tollPerKm'), travellers: $('travellers'),
+    tickets: $('tickets'), farePerKm: $('farePerKm'), isReturn: $('isReturn'),
+    drivingFields: $('drivingFields'), flyingFields: $('flyingFields'),
+    distanceErr: $('distanceErr'),
+  };
+  const out = {
+    routeLine: $('routeLine'), resultWrap: $('resultWrap'),
+    totalCost: $('totalCost'), perPerson: $('perPerson'),
+    fuelNeeded: $('fuelNeeded'), driveTime: $('driveTime'),
+    breakup: $('breakup'), fuelBlock: $('fuelBlock'), timeBlock: $('timeBlock')
+  };
+
+  // ------- Map -------
+  const map = L.map('map', { zoomControl:true }).setView([20.5937, 78.9629], 5); // India
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+  let fromMarker=null, toMarker=null, routeLine=null, gpsWatchId=null;
+
+  // ------- Formatters -------
+  const fmtINR = new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:0 });
+  const fmtINR2 = new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:2 });
+
+  // ------- UI helpers -------
+  function toggleMode(){
+    const mode = fields.mode.value;
+    fields.drivingFields.style.display = (mode === 'car' || mode === 'bike') ? '' : 'none';
+    fields.flyingFields.style.display = (mode === 'fly') ? '' : 'none';
+    out.timeBlock.style.display = (mode === 'fly') ? 'none' : ''; // hide drive time on Fly
+  }
+  fields.mode.addEventListener('change', toggleMode);
+
+  function saveState(){
+    const data = {};
+    Object.keys(fields).forEach(k=>{
+      const el = fields[k];
+      if (!el || el.tagName === 'DIV') return;
+      data[k] = el.value ?? '';
+    });
+    localStorage.setItem('yatracost:combined', JSON.stringify(data));
+  }
+  function restoreState(){
+    try{
+      const raw = localStorage.getItem('yatracost:combined'); if(!raw) return;
+      const data = JSON.parse(raw);
+      Object.keys(data).forEach(k=>{
+        if(fields[k] && fields[k].tagName !== 'DIV'){ fields[k].value = data[k]; }
+      });
+      toggleMode();
+    }catch(e){}
+  }
+
+  // ------- Geocoding & Routing -------
+  async function geocode(query){
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+    const res = await fetch(url, { headers: { 'Accept':'application/json' }});
+    if(!res.ok) throw new Error('Geocoding failed');
+    const data = await res.json();
+    if(!data || !data.length) throw new Error('Place not found');
+    const { lat, lon, display_name } = data[0];
+    return { lat: +lat, lon: +lon, name: display_name };
+  }
+  async function reverseGeocode(lat, lon){
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+    const res = await fetch(url);
+    if(!res.ok) return null;
+    const data = await res.json();
+    return data && data.display_name ? data.display_name : `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+  }
+  async function route(a, b){
+    const url = `https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Routing failed');
+    const data = await res.json();
+    if(!data.routes || !data.routes.length) throw new Error('No route found');
+    const r = data.routes[0];
+    return { distanceKm: r.distance/1000, durationHrs: r.duration/3600, geometry: r.geometry };
+  }
+  function setMarker(type, coords, label){
+    const html = `<div style="background:${type==='from'?'#22c55e':'#0ea5e9'};width:12px;height:12px;border-radius:999px;border:2px solid white;box-shadow:0 0 0 2px rgba(0,0,0,.2)"></div>`;
+    const icon = L.divIcon({ className:'', html, iconSize:[12,12]});
+    if(type==='from'){ if(fromMarker) map.removeLayer(fromMarker); fromMarker = L.marker([coords.lat, coords.lon], { icon, title:label }).addTo(map); }
+    else { if(toMarker) map.removeLayer(toMarker); toMarker = L.marker([coords.lat, coords.lon], { icon, title:label }).addTo(map); }
+  }
+  function clearRoute(){ if(routeLine){ map.removeLayer(routeLine); routeLine=null; } }
+
+  async function findRouteAndFill(){
+    try{
+      const fromQ = fields.from.value.trim();
+      const toQ = fields.to.value.trim();
+      if(!fromQ || !toQ){ alert('Enter both From and To (or use GPS).'); return; }
+
+      out.routeLine.textContent = 'Finding route…';
+      const [A, B] = await Promise.all([geocode(fromQ), geocode(toQ)]);
+      setMarker('from', A, A.name);
+      setMarker('to', B, B.name);
+
+      const r = await route(A, B);
+      fields.distance.value = r.distanceKm.toFixed(1);
+
+      clearRoute();
+      routeLine = L.geoJSON(r.geometry, { weight:5, opacity:0.85 }).addTo(map);
+      map.fitBounds(routeLine.getBounds(), { padding:[30,30] });
+
+      const mode = fields.mode.value;
+      out.routeLine.textContent = `${A.name.split(',')[0]} → ${B.name.split(',')[0]} • ${r.distanceKm.toFixed(1)} km • ${mode==='fly'?'Flying':'Driving'} route`;
+      out.driveTime.textContent = `${Math.floor(r.durationHrs)}h ${Math.round((r.durationHrs%1)*60)}m`;
+      out.timeBlock.style.display = (mode === 'fly') ? 'none' : '';
+
+      saveState();
+    }catch(err){
+      console.error(err);
+      alert(err.message || 'Could not find route. Try a different place name.');
+    }
+  }
+
+  // ------- GPS -------
+  $('useGps').addEventListener('click', async ()=>{
+    if(!('geolocation' in navigator)){ alert('GPS not available in this browser.'); return; }
+    $('fromHint').textContent = 'Getting your location…';
+    navigator.geolocation.getCurrentPosition(async (pos)=>{
+      const { latitude:lat, longitude:lon } = pos.coords;
+      const label = await reverseGeocode(lat, lon);
+      fields.from.value = label || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+      setMarker('from', {lat, lon}, label);
+      map.setView([lat, lon], 12);
+      $('fromHint').textContent = 'GPS set. Hold 📍 to briefly preview live.';
+    }, ()=>{
+      alert('Location denied/unavailable.');
+      $('fromHint').textContent = 'Could not access GPS.';
+    }, { enableHighAccuracy:true, timeout:12000, maximumAge:0 });
+  });
+
+  // Long-press: start/stop temporary live watch
+  $('useGps').addEventListener('mousedown', ()=>{
+    if(gpsWatchId || !('geolocation' in navigator)) return;
+    gpsWatchId = navigator.geolocation.watchPosition(async (pos)=>{
+      const { latitude:lat, longitude:lon } = pos.coords;
+      const label = await reverseGeocode(lat, lon);
+      fields.from.value = label || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+      setMarker('from', {lat, lon}, label);
+    }, ()=>{}, { enableHighAccuracy:true, maximumAge:5000, timeout:20000 });
+    $('fromHint').textContent = 'Live GPS ON (release mouse to stop)…';
+  });
+  document.addEventListener('mouseup', ()=>{
+    if(gpsWatchId){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; $('fromHint').textContent='Live GPS OFF. Click 📍 for one-time set, hold to preview live.'; }
+  });
+
+  // Swap From/To (and markers)
+  $('swap').addEventListener('click', ()=>{
+    const a = fields.from.value; fields.from.value = fields.to.value; fields.to.value = a;
+    const fm = fromMarker ? fromMarker.getLatLng() : null;
+    const tm = toMarker ? toMarker.getLatLng() : null;
+    if(fm && tm){
+      setMarker('from', {lat: tm.lat, lon: tm.lng}, 'From');
+      setMarker('to', {lat: fm.lat, lon: fm.lng}, 'To');
+    }
+  });
+
+  // ------- Core calculations (INR) -------
+  function hoursAndMinutes(h){
+    const totalMin = Math.round(h * 60);
+    const HH = Math.floor(totalMin/60);
+    const MM = totalMin % 60;
+    return `${HH}h ${MM}m`;
+  }
+  function calcDriving(distance, mileage, fuelPrice, tollPerKm, travellers, avgSpeed){
+    const fuelNeeded = distance / mileage;
+    const fuelCost = fuelNeeded * fuelPrice;
+    const tollCost = distance * tollPerKm;
+    const total = fuelCost + tollCost;
+    const perPerson = total / travellers;
+    const timeHrs = distance / avgSpeed;
+    return {
+      total, perPerson, fuelNeeded, timeHrs,
+      breakup: [
+        `Fuel ${fmtINR2.format(fuelCost)}`,
+        tollPerKm>0 ? `Tolls ${fmtINR2.format(tollCost)}` : null
+      ].filter(Boolean).join(' • ')
+    };
+  }
+  function calcFlying(distance, farePerKm, passengers, isReturn){
+    const legs = (isReturn === 'return') ? 2 : 1;
+    const perTicket = distance * farePerKm * legs;
+    const total = perTicket * passengers;
+    const perPerson = perTicket;
+    return {
+      total, perPerson, fuelNeeded: null, timeHrs: null,
+      breakup: [
+        `${legs===2?'Return':'One-way'} fare`,
+        `${distance} km × ₹${farePerKm}/km × ${legs} leg${legs>1?'s':''}`
+      ].join(' • ')
+    };
+  }
+
+  // ------- Events -------
+  $('routeBtn').addEventListener('click', findRouteAndFill);
+
+  $('calcForm').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const distance = parseFloat(fields.distance.value);
+    if (!distance || distance <= 0){ fields.distanceErr.hidden = false; return; }
+    fields.distanceErr.hidden = true;
+
+    const mode = fields.mode.value;
+    let result;
+    if(mode === 'car' || mode === 'bike'){
+      const mileage = Math.max(1, parseFloat(fields.mileage.value || '0'));
+      const fuel = Math.max(1, parseFloat(fields.fuel.value || '0'));
+      const toll = Math.max(0, parseFloat(fields.tollPerKm.value || '0'));
+      const travellers = Math.max(1, parseInt(fields.travellers.value || '1', 10));
+      const speed = Math.max(10, parseFloat(fields.speed.value || '60'));
+      result = calcDriving(distance, mileage, fuel, toll, travellers, speed);
+
+      out.fuelBlock.style.display = '';
+      out.timeBlock.style.display = '';
+      out.fuelNeeded.textContent = `${result.fuelNeeded.toFixed(2)} L`;
+
+      // If no OSRM time shown, fallback to simple time calc
+      if(!out.driveTime.textContent || out.driveTime.textContent === '0 h'){
+        out.driveTime.textContent = hoursAndMinutes(result.timeHrs);
+      }
+    }else{
+      const passengers = Math.max(1, parseInt(fields.tickets.value || '1', 10));
+      const farePerKm = Math.max(1, parseFloat(fields.farePerKm.value || '1'));
+      const isReturn = fields.isReturn.value;
+      result = calcFlying(distance, farePerKm, passengers, isReturn);
+      out.fuelBlock.style.display = 'none';
+      out.timeBlock.style.display = 'none';
+    }
+
+    const from = fields.from.value.trim();
+    const to = fields.to.value.trim();
+    if (from || to){
+      out.routeLine.textContent = `${from || '—'} → ${to || '—'} • ${distance.toFixed(1)} km • Mode: ${mode==='fly'?'Flying':'Driving'}`;
+    } else {
+      out.routeLine.textContent = `${distance.toFixed(1)} km • Mode: ${mode==='fly'?'Flying':'Driving'}`;
+    }
+    out.totalCost.textContent = fmtINR.format(result.total);
+    out.perPerson.textContent = fmtINR.format(result.perPerson);
+    out.breakup.textContent = result.breakup || '—';
+    out.resultWrap.hidden = false;
+
+    saveState();
+  });
+
+  $('resetBtn').addEventListener('click', ()=>{
+    $('calcForm').reset();
+    toggleMode();
+    out.resultWrap.hidden = true;
+    out.routeLine.textContent = 'Enter places and click “Find Route”.';
+    if(fromMarker) map.removeLayer(fromMarker); fromMarker=null;
+    if(toMarker) map.removeLayer(toMarker); toMarker=null;
+    clearRoute();
+    localStorage.removeItem('yatracost:combined');
+    map.setView([20.5937, 78.9629], 5);
+  });
+
+  // Theme toggle
+  const themes = [
+    {'--bg-start':'#0f172a','--bg-end':'#1e293b','--card':'#0b1220ee','--accent':'#22c55e','--muted':'#94a3b8','--text':'#e5e7eb','--ring':'#334155','--danger':'#ef4444'},
+    {'--bg-start':'#fafafa','--bg-end':'#f4f0ff','--card':'#ffffffee','--accent':'#7c3aed','--muted':'#6b7280','--text':'#0b1220','--ring':'#d1d5db','--danger':'#dc2626'},
+  ];
+  let themeIdx = 0;
+  $('themeBtn').addEventListener('click', ()=>{
+    themeIdx = (themeIdx+1) % themes.length;
+    const t = themes[themeIdx];
+    Object.keys(t).forEach(k=>document.documentElement.style.setProperty(k, t[k]));
+  });
+
+  restoreState();
+})();
+</script>
+</body>
+</html>
