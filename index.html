@@ -1,1102 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8">
 <title>YatraCost Pro — Trip Cost Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Icons + Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
-<!-- Leaflet Map -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
 <style>
-/* ========== PART 2 (CSS) WILL BE INSERTED HERE NEXT ========== */
-  /* ============================================================
-   YATRACOST PRO - ORIGINAL UI (IMPROVED)
-   ============================================================ */
-
-:root {
-  --bg1: #0f172a;
-  --bg2: #1e293b;
-  --card: #0b1220ee;
-  --text: #e5e7eb;
-  --muted: #94a3b8;
-  --accent: #22c55e;
-  --accent2: #0ea5e9;
-  --shadow: 0 10px 30px rgba(2,6,23,0.4);
-  --radius: 16px;
+body{
+  margin:0;font-family:Inter;background:#0f172a;color:#e5e7eb
 }
-
-/* LIGHT MODE */
-body.light {
-  --bg1: #f4f0ff;
-  --bg2: #ffffff;
-  --card: #ffffff;
-  --text: #0b1220;
-  --muted: #6b7280;
-  --accent: #7c3aed;
-  --accent2: #0284c7;
+header{
+  background:#020617;padding:15px 20px;display:flex;gap:12px;align-items:center
 }
-
-/* ============================================================
-   GLOBAL
-   ============================================================ */
-body {
-  margin: 0;
-  font-family: "Inter", system-ui;
-  color: var(--text);
-  background:
-    radial-gradient(1200px 800px at 20% -10%, #0ea5e933 0, transparent 60%),
-    radial-gradient(1200px 800px at 120% 110%, #22c55e33 0, transparent 60%),
-    linear-gradient(160deg, var(--bg1), var(--bg2));
-  transition: 0.3s ease;
+h1{margin:0;font-size:20px}
+.container{
+  max-width:1200px;margin:auto;padding:20px;
+  display:grid;grid-template-columns:1fr 1fr;gap:20px
 }
-
-.card {
-  background: var(--card);
-  border: 1px solid #0b122055;
-  padding: 20px;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(10px);
-  margin-bottom: 18px;
+@media(max-width:900px){.container{grid-template-columns:1fr}}
+.card{
+  background:#020617;padding:20px;border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4)
 }
-
-h2, h3 {
-  margin-top: 0;
+input,select,button{
+  width:100%;padding:12px;border-radius:10px;border:none;margin-top:8px
 }
-
-/* ============================================================
-   TOPBAR
-   ============================================================ */
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--card);
-  padding: 14px 20px;
-  border-bottom: 1px solid #334155aa;
-  position: sticky;
-  top: 0;
-  z-index: 999;
-  box-shadow: var(--shadow);
-}
-
-.menu-btn {
-  background: #33415588;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 10px;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.themeBtn {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  background: var(--accent2);
-  color: #fff;
-  font-weight: 700;
-}
-
-.flagBtn {
-  border-radius: 6px;
-  border: 1px solid #334155;
-  width: 22px;
-  height: 16px;
-}
-
-/* ============================================================
-   INPUTS
-   ============================================================ */
-input, select, button {
-  font-family: inherit;
-}
-
-input, select {
-  width: 100%;
-  padding: 12px;
-  border-radius: 12px;
-  background: #0b1220;
-  color: var(--text);
-  border: 1px solid #334155aa;
-  margin-bottom: 12px;
-}
-
-body.light input,
-body.light select {
-  background: #ffffff;
-  color: #111;
-}
-
-input:focus, select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px #22c55e44;
-}
-
-/* ============================================================
-   BUTTONS
-   ============================================================ */
-.route-btn,
-.calc-btn {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  font-weight: 700;
-  color: #08121a;
-}
-
-.route-btn {
-  background: linear-gradient(135deg, var(--accent2), #0284c7);
-}
-
-.calc-btn {
-  background: linear-gradient(135deg, var(--accent), #16a34a);
-}
-
-/* Special button for Hotels */
-#findHotelsBtn {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: #fff;
-  font-weight: 700;
-}
-
-/* ============================================================
-   LAYOUT GRID
-   ============================================================ */
-.container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  padding: 20px;
-  max-width: 1200px;
-  margin: auto;
-}
-
-@media (max-width: 900px) {
-  .container {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ============================================================
-   WEATHER
-   ============================================================ */
-.weatherBox {
-  background: var(--card);
-  padding: 18px;
-  border-radius: var(--radius);
-  border: 1px solid #0b122055;
-  box-shadow: var(--shadow);
-}
-
-/* ============================================================
-   MAP
-   ============================================================ */
-#map {
-  height: 420px;
-  border-radius: var(--radius);
-  margin: 20px;
-  border: 1px solid #0b122055;
-  box-shadow: var(--shadow);
-}
-
-/* ============================================================
-   MODALS
-   ============================================================ */
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-}
-
-.modal-content {
-  background: var(--card);
-  padding: 22px;
-  border-radius: var(--radius);
-  width: 90%;
-  max-width: 420px;
-  border: 1px solid #334155aa;
-  box-shadow: var(--shadow);
-}
-
-.save-btn {
-  padding: 12px;
-  border-radius: 10px;
-  background: var(--accent);
-  color: #0f172a;
-  font-weight: 700;
-  border: none;
-  width: 100%;
-  cursor: pointer;
-  margin-top: 12px;
-}
-
-.close-btn {
-  padding: 12px;
-  border-radius: 10px;
-  background: #334155;
-  color: #fff;
-  font-weight: 700;
-  border: none;
-  width: 100%;
-  cursor: pointer;
-  margin-top: 12px;
-}
-
-/* ============================================================
-   LANGUAGE GRID
-   ============================================================ */
-.lang-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.langBtn {
-  background: #334155aa;
-  padding: 10px;
-  border-radius: 10px;
-  border: none;
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-}
-
-/* ============================================================
-   RESULT BOX
-   ============================================================ */
-.result-card {
-  background: var(--card);
-  padding: 20px;
-  border-radius: var(--radius);
-  border: 1px solid #334155aa;
-  box-shadow: var(--shadow);
-}
-
-#resultBox {
-  line-height: 1.8;
-  margin-top: 10px;
-}
-
+button{background:#22c55e;color:#08121a;font-weight:700;cursor:pointer}
+#map{height:420px;border-radius:14px;margin:20px}
+.result div{margin:6px 0}
+.hotel{border-bottom:1px solid #334155;padding:6px 0}
 </style>
 </head>
 
 <body>
 
-<!-- ========================================================= -->
-<!--                       TOP BAR                             -->
-<!-- ========================================================= -->
-
-<header class="topbar">
-
-  <button class="menu-btn" id="menuBtn">☰</button>
-
-  <h2 style="margin:0;font-size:20px;">YatraCost Pro</h2>
-
-  <!-- LANGUAGE FLAGS -->
-  <div style="display:flex;gap:8px;margin-left:auto;">
-    <img src="https://flagcdn.com/w20/in.png" class="flagBtn" data-lang="en" style="cursor:pointer;">
-    <img src="https://flagcdn.com/w20/in.png" class="flagBtn" data-lang="hi" style="cursor:pointer;">
-    <img src="https://flagcdn.com/w20/in.png" class="flagBtn" data-lang="te" style="cursor:pointer;">
-  </div>
-
-  <!-- Currency Selector -->
-  <select id="currencySelect" style="margin-left:10px;padding:6px;border-radius:6px;">
-    <option value="INR">INR ₹</option>
-    <option value="USD">USD $</option>
-    <option value="EUR">EUR €</option>
-    <option value="AED">AED د.إ</option>
-    <option value="GBP">GBP £</option>
-  </select>
-
-  <!-- Theme Button -->
-  <button id="themeToggle" class="themeBtn">🌓</button>
-
-  <!-- Login Button -->
-  <button style="margin-left:8px;" class="menu-btn" onclick="loginModal.style.display='flex'">🔐</button>
-
-  <div id="helloUser" class="helloUser">Hi, Traveller 👋</div>
+<header>
+  <h1>YatraCost Pro</h1>
+  <span>Map • Route • Hotels • Weather</span>
 </header>
 
-
-<!-- ========================================================= -->
-<!--                     MAIN PAGE GRID                        -->
-<!-- ========================================================= -->
 <div class="container">
 
-  <!-- ===================== LEFT CARD ===================== -->
+<div class="card">
+  <label>From</label>
+  <input id="from" placeholder="Start typing city name">
+
+  <label>Via (optional)</label>
+  <input id="via" placeholder="Optional stop">
+
+  <label>To</label>
+  <input id="to" placeholder="Destination city">
+
+  <button onclick="findRoute()">Find Route</button>
+
+  <label>Distance (km)</label>
+  <input id="distance">
+
+  <label>Mileage (km/L)</label>
+  <input id="mileage" value="18">
+
+  <label>Fuel price (₹/L)</label>
+  <input id="fuel" value="110">
+
+  <label>Travellers</label>
+  <input id="travellers" value="2">
+
+  <label>Hotel per night (₹)</label>
+  <input id="hotel" value="1500">
+
+  <label>Nights</label>
+  <input id="nights" value="1">
+
+  <label>Food per person/day (₹)</label>
+  <input id="food" value="300">
+
+  <button onclick="calculate()">Calculate Cost</button>
+</div>
+
+<div>
   <div class="card">
-
-    <h2 style="margin-top:0;">Trip Details</h2>
-
-    <!-- FROM -->
-    <label id="lblFrom">From</label>
-    <input id="from" list="cities" placeholder="e.g., Hyderabad" />
-
-    <!-- VIA -->
-    <label id="lblVia">Via (optional)</label>
-    <input id="via" list="cities" placeholder="e.g., Anantapur" />
-
-    <!-- TO -->
-    <label id="lblTo">To</label>
-    <input id="to" list="cities" placeholder="e.g., Bengaluru" />
-
-    <!-- ROUTE BUTTON -->
-    <button class="route-btn" id="routeBtn">Find Route</button>
-
-    <!-- DISTANCE -->
-    <label id="lblDistance">Distance (km)</label>
-    <input id="distance" type="number" placeholder="Auto-filled after route" />
-
-    <!-- MILEAGE -->
-    <label id="lblMileage">Mileage (km/L)</label>
-    <input id="mileage" type="number" value="18" />
-
-    <!-- FUEL -->
-    <label id="lblFuel">Fuel Price (₹/L)</label>
-    <input id="fuel" type="number" value="110" />
-
-    <!-- TOLL -->
-    <label id="lblToll">Toll (₹/km)</label>
-    <input id="toll" type="number" value="1.5" />
-
-    <!-- TRAVELLERS -->
-    <label id="lblTravellers">Travellers</label>
-    <input id="travellers" type="number" value="2" />
-
-    <!-- STAY SECTION -->
-    <h3 style="margin-top:20px;">Stay Details</h3>
-
-    <label id="lblHotelRate">Hotel Rate (₹/room/night)</label>
-    <input id="hotelRate" type="number" value="1500" />
-
-    <label id="lblNights">Nights</label>
-    <input id="nights" type="number" value="1" />
-
-    <label id="lblPplRoom">People per Room</label>
-    <input id="pplRoom" type="number" value="2" />
-
-    <!-- NEW: BOOKING LINK -->
-    <label>Hotel Booking Link (optional)</label>
-    <input id="hotelLink" placeholder="Paste Booking.com / Goibibo / MMT link" />
-
-    <!-- NEW: FIND HOTELS BUTTON -->
-    <button class="route-btn" id="findHotelsBtn" style="margin-top:8px;background:#10b981;">
-      🔍 Find Hotels Near Destination
-    </button>
-
-    <!-- FOOD -->
-    <label id="lblFood" style="margin-top:20px;">Food (₹ per person/day)</label>
-    <input id="food" type="number" value="300" />
-
-    <!-- EXTRAS -->
-    <label id="lblExtras">Extras</label>
-    <input id="extras" type="number" value="0" />
-
-    <!-- CALCULATE BUTTON -->
-    <button class="calc-btn" id="calcBtn">Calculate</button>
-
+    <h3>Weather</h3>
+    <div id="weather">—</div>
   </div>
 
-
-  <!-- ===================== RIGHT SIDE ===================== -->
-  <div>
-
-    <!-- WEATHER BOX -->
-    <div class="weatherBox">
-      <h3 id="weatherTitle">Weather</h3>
-      <div id="weatherNow">No data yet.</div>
-    </div>
-
-    <!-- RESULT BOX -->
-    <div class="card result-card">
-      <h2 id="resultTitle">Trip Summary</h2>
-      <div id="resultBox">Enter details to calculate...</div>
-    </div>
-
+  <div class="card">
+    <h3>Trip Summary</h3>
+    <div id="result">—</div>
   </div>
+
+  <div class="card">
+    <h3>Nearby Hotels</h3>
+    <div id="hotels">—</div>
+  </div>
+</div>
 
 </div>
 
-
-<!-- ========================================================= -->
-<!--                        MAP SECTION                         -->
-<!-- ========================================================= -->
 <div id="map"></div>
 
-
-<!-- ========================================================= -->
-<!--                     LOGIN POPUP                            -->
-<!-- ========================================================= -->
-<div class="modal" id="loginModal">
-  <div class="modal-content">
-
-    <h2 id="loginTitle">Login</h2>
-
-    <label id="lblLoginName">Name</label>
-    <input id="loginName" />
-
-    <label id="lblLoginEmail">Email</label>
-    <input id="loginEmail" type="email" />
-
-    <label id="lblLoginPhone">Phone</label>
-    <input id="loginPhone" type="tel" />
-
-    <button class="save-btn" id="saveLogin">Save</button>
-    <button class="close-btn" id="closeLogin">Close</button>
-
-  </div>
-</div>
-
-
-<!-- ========================================================= -->
-<!--                     SETTINGS POPUP                         -->
-<!-- ========================================================= -->
-<div class="modal" id="settingsModal">
-  <div class="modal-content">
-
-    <h2 id="settingsTitle">Settings</h2>
-
-    <h3 id="languageTitle">🌐 Select Language</h3>
-
-    <div class="lang-grid">
-      <button class="langBtn" data-lang="en">English</button>
-      <button class="langBtn" data-lang="hi">हिंदी</button>
-      <button class="langBtn" data-lang="te">తెలుగు</button>
-      <button class="langBtn" data-lang="ta">தமிழ்</button>
-      <button class="langBtn" data-lang="kn">ಕನ್ನಡ</button>
-      <button class="langBtn" data-lang="ml">മലയാളം</button>
-      <button class="langBtn" data-lang="gu">ગુજરાતી</button>
-      <button class="langBtn" data-lang="mr">मराठी</button>
-      <button class="langBtn" data-lang="bn">বাংলা</button>
-      <button class="langBtn" data-lang="ur">اردو</button>
-    </div>
-
-    <h3 id="currencyTitle">💱 Currency</h3>
-    <select id="currencyModalSelect">
-      <option value="INR">INR ₹</option>
-      <option value="USD">USD $</option>
-      <option value="EUR">EUR €</option>
-      <option value="AED">AED د.إ</option>
-      <option value="GBP">GBP £</option>
-    </select>
-
-    <button class="close-btn" id="closeSettings">Close</button>
-
-  </div>
-</div>
-
-
-<!-- ========================================================= -->
-<!--                  DATALIST FOR CITIES                       -->
-<!-- ========================================================= -->
-<datalist id="cities">
-  <option>Hyderabad</option>
-  <option>Bengaluru</option>
-  <option>Chennai</option>
-  <option>Mumbai</option>
-  <option>Delhi</option>
-  <option>Pune</option>
-  <option>Kolkata</option>
-  <option>Goa</option>
-  <option>Vijayawada</option>
-  <option>Tirupati</option>
-</datalist>
-
-
-<!-- ========================================================= -->
-<!--                JAVASCRIPT SECTION START                    -->
-<!-- ========================================================= -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
-/* ===== PART 3 & PART 4 SCRIPTS WILL BE INSERTED BELOW ===== */
-  /* ============================================================
-   PART 3 — CORE ENGINE (Routing, Weather, Costing, Theme, Login)
-   ============================================================ */
+const map=L.map("map").setView([20.59,78.96],5);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+let routeLayer, destPoint;
 
-/* ---------- ELEMENT SHORTCUTS ---------- */
-const $ = id => document.getElementById(id);
-
-/* ---------- THEME SYSTEM ---------- */
-function applyTheme() {
-  if (localStorage.getItem("ycTheme") === "light") {
-    document.body.classList.add("light");
-  } else {
-    document.body.classList.remove("light");
-  }
-}
-applyTheme();
-
-themeToggle.onclick = () => {
-  let t = localStorage.getItem("ycTheme") === "light" ? "dark" : "light";
-  localStorage.setItem("ycTheme", t);
-  applyTheme();
-};
-
-/* ---------- LOGIN SYSTEM ---------- */
-saveLogin.onclick = () => {
-  const name = loginName.value.trim();
-  const email = loginEmail.value.trim();
-  const phone = loginPhone.value.trim();
-
-  if (name.length < 2) { alert("Enter valid name"); return; }
-  if (!email.includes("@")) { alert("Enter valid email"); return; }
-  if (phone.length < 8) { alert("Enter valid phone"); return; }
-
-  localStorage.setItem("ycName", name);
-  localStorage.setItem("ycEmail", email);
-  localStorage.setItem("ycPhone", phone);
-
-  helloUser.innerText = `Hi, ${name} 👋`;
-  loginModal.style.display = "none";
-};
-
-if (localStorage.getItem("ycName")) {
-  helloUser.innerText = `Hi, ${localStorage.getItem("ycName")} 👋`;
+async function geo(q){
+  const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`);
+  const d=await r.json(); if(!d[0]) throw "Place not found";
+  return {lat:+d[0].lat,lon:+d[0].lon};
 }
 
-closeLogin.onclick = () => loginModal.style.display = "none";
+async function findRoute(){
+  const A=from.value.trim(), B=to.value.trim(), C=via.value.trim();
+  if(!A||!B){alert("Enter From & To");return;}
 
-/* ---------- SETTINGS POPUP ---------- */
-menuBtn.onclick = () => settingsModal.style.display = "flex";
-closeSettings.onclick = () => settingsModal.style.display = "none";
-
-/* ============================================================
-   MAP SETUP
-   ============================================================ */
-const map = L.map("map").setView([20.5937, 78.9629], 5);
-
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19
-}).addTo(map);
-
-let markerFrom = null, markerVia = null, markerTo = null, routeLayer = null;
-
-function addMarker(type, lat, lon) {
-  const color = type === "from" ? "#22c55e" : type === "via" ? "#f59e0b" : "#0ea5e9";
-
-  const icon = L.divIcon({
-    className: "",
-    html: `<div style="background:${color};width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px rgba(0,0,0,0.4)"></div>`
-  });
-
-  if (type === "from") {
-    if (markerFrom) map.removeLayer(markerFrom);
-    markerFrom = L.marker([lat, lon], { icon }).addTo(map);
-  }
-  if (type === "via") {
-    if (markerVia) map.removeLayer(markerVia);
-    markerVia = L.marker([lat, lon], { icon }).addTo(map);
-  }
-  if (type === "to") {
-    if (markerTo) map.removeLayer(markerTo);
-    markerTo = L.marker([lat, lon], { icon }).addTo(map);
-  }
-}
-
-/* ---------- GEOCODING ---------- */
-async function geo(place) {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}`;
-  const r = await fetch(url);
-  const d = await r.json();
-  if (!d[0]) throw new Error("Place not found: " + place);
-  return { lat: +d[0].lat, lon: +d[0].lon };
-}
-
-/* ---------- ROUTING ---------- */
-async function getRoute() {
-  const A = from.value.trim();
-  const B = to.value.trim();
-  const C = via.value.trim();
-
-  if (!A || !B) { alert("Enter From and To"); return; }
-
-  const pA = await geo(A);
-  const pB = await geo(B);
-
-  let pts = [pA];
-  addMarker("from", pA.lat, pA.lon);
-
-  if (C) {
-    const pC = await geo(C);
-    pts.push(pC);
-    addMarker("via", pC.lat, pC.lon);
-  }
-
+  const pA=await geo(A), pB=await geo(B);
+  destPoint=pB;
+  let pts=[pA];
+  if(C) pts.push(await geo(C));
   pts.push(pB);
-  addMarker("to", pB.lat, pB.lon);
 
-  const coords = pts.map(p => `${p.lon},${p.lat}`).join(";");
+  const coords=pts.map(p=>`${p.lon},${p.lat}`).join(";");
+  const r=await fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`);
+  const d=await r.json();
+  const rt=d.routes[0];
 
-  const r = await fetch(
-    `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`
-  );
-  const data = await r.json();
-
-  const route = data.routes[0];
-  if (!route) throw new Error("Routing failed");
-
-  distance.value = (route.distance / 1000).toFixed(1);
-
-  if (routeLayer) map.removeLayer(routeLayer);
-  routeLayer = L.geoJSON(route.geometry, { color: "#0ea5e9", weight: 5 }).addTo(map);
+  distance.value=(rt.distance/1000).toFixed(1);
+  if(routeLayer) map.removeLayer(routeLayer);
+  routeLayer=L.geoJSON(rt.geometry).addTo(map);
   map.fitBounds(routeLayer.getBounds());
 
-  getWeather(pB.lat, pB.lon);
+  loadWeather(pB.lat,pB.lon);
+  loadHotels(pB.lat,pB.lon);
 }
 
-routeBtn.onclick = () => {
-  getRoute().catch(err => alert(err.message));
-};
-
-/* ============================================================
-   WEATHER
-   ============================================================ */
-async function getWeather(lat, lon) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,windspeed_10m&timezone=auto`;
-  const r = await fetch(url);
-  const d = await r.json();
-
-  weatherNow.innerHTML = `
-    Temperature: ${d.current.temperature_2m}°C<br>
-    Wind: ${d.current.windspeed_10m} km/h
-  `;
+async function loadWeather(lat,lon){
+  const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m`);
+  const d=await r.json();
+  weather.innerHTML=`${d.current.temperature_2m}°C • Wind ${d.current.wind_speed_10m} km/h`;
 }
 
-/* ============================================================
-   COST CALCULATION
-   ============================================================ */
-function calculate() {
-  let dist = +distance.value || 0;
-  let mileageV = +mileage.value || 1;
-  let fuelP = +fuel.value || 0;
-  let tollP = +toll.value || 0;
-  let foodP = +food.value || 0;
-  let extra = +extras.value || 0;
-  let trav = +travellers.value || 1;
-  let nightsV = +nights.value || 0;
-  let rateV = +hotelRate.value || 0;
-  let pplRoomV = +pplRoom.value || 2;
-
-  let rooms = Math.ceil(trav / pplRoomV);
-
-  let fuelNeeded = dist / mileageV;
-  let fuelCost = fuelNeeded * fuelP;
-  let tollCost = dist * tollP;
-  let stayCost = rooms * nightsV * rateV;
-  let foodCost = trav * nightsV * foodP;
-
-  let total = fuelCost + tollCost + stayCost + foodCost + extra;
-
-  resultBox.innerHTML = `
-    <b>Distance:</b> ${dist} km<br>
-    <b>Fuel Needed:</b> ${fuelNeeded.toFixed(1)} L<br>
-    <b>Fuel Cost:</b> ₹${fuelCost.toFixed(0)}<br>
-    <b>Toll Cost:</b> ₹${tollCost.toFixed(0)}<br>
-    <b>Rooms Needed:</b> ${rooms}<br>
-    <b>Hotel Cost:</b> ₹${stayCost}<br>
-    <b>Food Cost:</b> ₹${foodCost}<br>
-    <b>Extras:</b> ₹${extra}<br>
-    <hr>
-    <b>Grand Total:</b> ₹${total.toFixed(0)}<br>
-    <b>Per Person:</b> ₹${(total / trav).toFixed(0)}
-  `;
-}
-
-calcBtn.onclick = calculate;
-
-/* ============================================================
-   HOTEL SEARCH BUTTON
-   ============================================================ */
-findHotelsBtn.onclick = () => {
-  let dest = to.value.trim();
-  if (!dest) { alert("Enter destination first"); return; }
-  window.open(`https://www.google.com/maps/search/hotels+near+${encodeURIComponent(dest)}`);
-};
-
-/* ============================================================
-   CURRENCY FROM TOP-RIGHT
-   ============================================================ */
-document.getElementById("currencySelect").onchange = (e) => {
-  localStorage.setItem("ycCurrency", e.target.value);
-};
-
-document.getElementById("currencyModalSelect").onchange = (e) => {
-  localStorage.setItem("ycCurrency", e.target.value);
-};
-
-const savedCurrency = localStorage.getItem("ycCurrency");
-if (savedCurrency) {
-  currencySelect.value = savedCurrency;
-  currencyModalSelect.value = savedCurrency;
-}
-/* ============================================================
-   PART 4 — LANGUAGE SYSTEM (10 Languages)
-   ============================================================ */
-
-const translations = {
-  en: {
-    from: "From",
-    via: "Via (optional)",
-    to: "To",
-    distance: "Distance (km)",
-    mileage: "Mileage (km/L)",
-    fuel: "Fuel Price (₹/L)",
-    toll: "Toll (₹/km)",
-    food: "Food (₹ per person/day)",
-    extras: "Extras",
-    travellers: "Travellers",
-    hotelRate: "Hotel Rate (₹/room/night)",
-    nights: "Nights",
-    pplRoom: "People per Room",
-    calc: "Calculate",
-    route: "Find Route",
-    weatherTitle: "Weather",
-    resultTitle: "Trip Summary",
-    loginTitle: "Login",
-  },
-  hi: {
-    from: "से",
-    via: "रास्ते में (वैकल्पिक)",
-    to: "तक",
-    distance: "दूरी (किमी)",
-    mileage: "माइलेज (किमी/ली)",
-    fuel: "ईंधन मूल्य (₹/ली)",
-    toll: "टोल (₹/किमी)",
-    food: "भोजन (₹ प्रति व्यक्ति/दिन)",
-    extras: "अतिरिक्त",
-    travellers: "यात्री",
-    hotelRate: "होटल दर (₹/कमरा/रात)",
-    nights: "रातें",
-    pplRoom: "कमरे में लोग",
-    calc: "गणना करें",
-    route: "मार्ग खोजें",
-    weatherTitle: "मौसम",
-    resultTitle: "यात्रा सारांश",
-    loginTitle: "लॉगिन",
-  },
-  te: {
-    from: "నుండి",
-    via: "ద్వారా (ఐచ్చికం)",
-    to: "వరకు",
-    distance: "దూరం (కిమీ)",
-    mileage: "మైలేజ్ (కిమీ/లీ)",
-    fuel: "ఇంధన ధర (₹/లీ)",
-    toll: "టోల్ (₹/కిమీ)",
-    food: "ఆహారం (₹ వ్యక్తి/రోజు)",
-    extras: "అదనపు ఖర్చులు",
-    travellers: "ప్రయాణికులు",
-    hotelRate: "హోటల్ రేటు (₹ గది/రాత్రి)",
-    nights: "రాత్రులు",
-    pplRoom: "ఒక గదిలో వ్యక్తులు",
-    calc: "లెక్కించు",
-    route: "మార్గం కనుగొను",
-    weatherTitle: "వాతావరణం",
-    resultTitle: "ప్రయాణ వివరాలు",
-    loginTitle: "లాగిన్",
-  },
-  ta: {
-    from: "இருந்து",
-    via: "வழியாக (விருப்பம்)",
-    to: "வரை",
-    distance: "தூரம் (கிமீ)",
-    mileage: "மைலேஜ் (கிமீ/லி)",
-    fuel: "எரிபொருள் விலை (₹/லி)",
-    toll: "சுங்கம் (₹/கிமீ)",
-    food: "உணவு (₹ நபர்/நாள்)",
-    extras: "கூடுதல் செலவு",
-    travellers: "பயணிகள்",
-    hotelRate: "ஹோட்டல் விலை (₹ அறை/இரைவு)",
-    nights: "இரவுகள்",
-    pplRoom: "ஒரு அறையில் பேர்",
-    calc: "கணக்கிடு",
-    route: "பாதை காண்க",
-    weatherTitle: "வானிலை",
-    resultTitle: "பயணம் சுருக்கம்",
-    loginTitle: "உள்நுழை",
-  },
-  kn: {
-    from: "ನಿಂದ",
-    via: "ಮೂಲಕ (ಐಚ್ಛಿಕ)",
-    to: "ವರೆಗೆ",
-    distance: "ದೂರ (ಕಿಮೀ)",
-    mileage: "ಮೈಲೇಜ್ (ಕಿಮೀ/ಲೀ)",
-    fuel: "ಇಂಧನ ಬೆಲೆ (₹/ಲೀ)",
-    toll: "ಟೋಲ್ (₹/ಕಿಮೀ)",
-    food: "ಆಹಾರ (₹ ವ್ಯಕ್ತಿ/ದಿನ)",
-    extras: "ಹೆಚ್ಚುವರಿ ವೆಚ್ಚ",
-    travellers: "ಪ್ರಯಾಣಿಕರು",
-    hotelRate: "ಹೋಟೆಲ್ ದರ (₹ ಕೋಣೆ/ರಾತ್ರಿ)",
-    nights: "ರಾತ್ರಿಗಳು",
-    pplRoom: "ಒಂದು ಕೋಣೆಗೆ ಜನರು",
-    calc: "ಲೆಕ್ಕಿಸಿ",
-    route: "ಮಾರ್ಗ ನೋಡಿ",
-    weatherTitle: "ಹವಾಮಾನ",
-    resultTitle: "ಪ್ರಯಾಣ ಸಾರಾಂಶ",
-    loginTitle: "ಲಾಗಿನ್",
-  },
-  ml: {
-    from: "നിന്ന്",
-    via: "വഴിയായി (ഐച്ഛികം)",
-    to: "വരെ",
-    distance: "ദൂരം (കി.മീ)",
-    mileage: "മൈലേജ് (കി.മീ/ലി)",
-    fuel: "ഇന്ധനവില (₹/ലി)",
-    toll: "ടോൾ (₹/കി.മീ)",
-    food: "ഭക്ഷണം (₹ വ്യക്തി/ദിവസം)",
-    extras: "അധിക ചെലവ്",
-    travellers: "യാത്രക്കാരൻമാർ",
-    hotelRate: "ഹോട്ടൽ നിരക്ക് (₹ മുറി/രാത്രി)",
-    nights: "രാത്രികൾ",
-    pplRoom: "ഒരു മുറിയിൽ ആളുകൾ",
-    calc: "കണക്കാക്കുക",
-    route: "റൂട്ട് കണ്ടെത്തുക",
-    weatherTitle: "കാലാവസ്ഥ",
-    resultTitle: "യാത്രയുടെ സംഗ്രഹം",
-    loginTitle: "ലോഗിൻ",
-  },
-  mr: {
-    from: "पासून",
-    via: "मार्गे (ऐच्छिक)",
-    to: "पर्यंत",
-    distance: "अंतर (कि.मी)",
-    mileage: "मायलेज (कि.मी/ली)",
-    fuel: "इंधन किंमत (₹/ली)",
-    toll: "टोल (₹/कि.मी)",
-    food: "अन्न (₹ प्रति व्यक्ती/दिवस)",
-    extras: "अतिरिक्त",
-    travellers: "प्रवासी",
-    hotelRate: "हॉटेल दर (₹ खोली/रात्र)",
-    nights: "रात्रा",
-    pplRoom: "एका खोलीत लोक",
-    calc: "हिशोब करा",
-    route: "मार्ग शोधा",
-    weatherTitle: "हवामान",
-    resultTitle: "प्रवास सारांश",
-    loginTitle: "लॉगिन",
-  },
-  gu: {
-    from: "થી",
-    via: "મારફતે (વૈકલ્પિક)",
-    to: "સુધી",
-    distance: "અંતર (કિ.મી)",
-    mileage: "માઇલેજ (કિ.મી/લી)",
-    fuel: "ઇંધણ ભાવ (₹/લી)",
-    toll: "ટોલ (₹/કિ.મી)",
-    food: "ખોરાક (₹ વ્યક્તિ/દિવસ)",
-    extras: "વધારાનો ખર્ચ",
-    travellers: "પ્રવાસીઓ",
-    hotelRate: "હોટેલ દર (₹ રૂમ/રાત)",
-    nights: "રાતો",
-    pplRoom: "એક રૂમમાં લોકો",
-    calc: "ગણતરી કરો",
-    route: "માર્ગ શોધો",
-    weatherTitle: "હવામાન",
-    resultTitle: "પ્રવાસ સારાંશ",
-    loginTitle: "લૉગિન",
-  },
-  bn: {
-    from: "হতে",
-    via: "মাধ্যমে (ঐচ্ছিক)",
-    to: "পর্যন্ত",
-    distance: "দূরত্ব (কিমি)",
-    mileage: "মাইলেজ (কিমি/লি)",
-    fuel: "জ্বালানি মূল্য (₹/লি)",
-    toll: "টোল (₹/কিমি)",
-    food: "খাবার (₹ প্রতি ব্যক্তি/দিন)",
-    extras: "অতিরিক্ত খরচ",
-    travellers: "যাত্রী",
-    hotelRate: "হোটেল রেট (₹ রুম/রাত)",
-    nights: "রাত",
-    pplRoom: "এক রুমে লোক",
-    calc: "গণনা করুন",
-    route: "রুট খুঁজুন",
-    weatherTitle: "আবহাওয়া",
-    resultTitle: "ভ্রমণ সারসংক্ষেপ",
-    loginTitle: "লগইন",
-  },
-  ur: {
-    from: "سے",
-    via: "کے ذریعے (اختیاری)",
-    to: "تک",
-    distance: "فاصلہ (کلومیٹر)",
-    mileage: "مائلیج (کلومیٹر/لیٹر)",
-    fuel: "ایندھن کی قیمت (₹/لیٹر)",
-    toll: "ٹول (₹/کلومیٹر)",
-    food: "کھانا (₹ فی شخص/دن)",
-    extras: "اضافی خرچ",
-    travellers: "مسافر",
-    hotelRate: "ہوٹل ریٹ (₹ کمرہ/رات)",
-    nights: "راتیں",
-    pplRoom: "ایک کمرے میں لوگ",
-    calc: "حساب کریں",
-    route: "راستہ تلاش کریں",
-    weatherTitle: "موسم",
-    resultTitle: "سفر کا خلاصہ",
-    loginTitle: "لاگ ان",
-  }
-};
-
-/* ============================================================
-   APPLY LANGUAGE FUNCTION
-   ============================================================ */
-function applyLanguage(lang) {
-  const t = translations[lang];
-
-  lblFrom.textContent = t.from;
-  lblVia.textContent = t.via;
-  lblTo.textContent = t.to;
-  lblDistance.textContent = t.distance;
-  lblMileage.textContent = t.mileage;
-  lblFuel.textContent = t.fuel;
-  lblToll.textContent = t.toll;
-  lblFood.textContent = t.food;
-  lblExtras.textContent = t.extras;
-  lblTravellers.textContent = t.travellers;
-  lblHotelRate.textContent = t.hotelRate;
-  lblNights.textContent = t.nights;
-  lblPplRoom.textContent = t.pplRoom;
-
-  calcBtn.textContent = t.calc;
-  routeBtn.textContent = t.route;
-
-  weatherTitle.textContent = t.weatherTitle;
-  resultTitle.textContent = t.resultTitle;
-  loginTitle.textContent = t.loginTitle;
-}
-
-/* ============================================================
-   FLAG BUTTON LANGUAGE SWITCH
-   ============================================================ */
-document.querySelectorAll(".flagBtn").forEach(btn => {
-  btn.onclick = () => {
-    const lang = btn.dataset.lang;
-    localStorage.setItem("ycLang", lang);
-    applyLanguage(lang);
-  };
-});
-
-/* ============================================================
-   LANGUAGE BUTTONS INSIDE SETTINGS
-   ============================================================ */
-document.querySelectorAll(".langBtn").forEach(btn => {
-  btn.onclick = () => {
-    const lang = btn.dataset.lang;
-    localStorage.setItem("ycLang", lang);
-    applyLanguage(lang);
-  };
-});
-
-/* ============================================================
-   RESTORE LAST USED LANGUAGE
-   ============================================================ */
-const savedLang = localStorage.getItem("ycLang") || "en";
-applyLanguage(savedLang);
-/* ============================================================
-   PART 5 — CURRENCY CONVERSION + FINAL GLUE
-   ============================================================ */
-
-/* ---------- AVAILABLE CURRENCIES ---------- */
-const currencyRates = {
-  INR: 1,
-  USD: 0.012,
-  EUR: 0.011,
-  GBP: 0.0098,
-  AED: 0.044
-};
-
-const currencySymbols = {
-  INR: "₹",
-  USD: "$",
-  EUR: "€",
-  GBP: "£",
-  AED: "AED "
-};
-
-/* ---------- APPLY CURRENCY FUNCTION ---------- */
-function convertValue(inINR) {
-  const rate = currencyRates[localStorage.getItem("ycCurrency") || "INR"];
-  return (inINR * rate).toFixed(2);
-}
-
-/* ---------- UPDATE RESULT BOX WITH CURRENCY ---------- */
-function updateResultCurrency() {
-  const cur = localStorage.getItem("ycCurrency") || "INR";
-  const symbol = currencySymbols[cur];
-
-  let html = resultBox.innerHTML;
-
-  html = html.replace(/₹([0-9]+)/g, (match, num) => {
-    return symbol + convertValue(num);
+async function loadHotels(lat,lon){
+  const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=hotel&limit=5&lat=${lat}&lon=${lon}`);
+  const d=await r.json();
+  hotels.innerHTML="";
+  d.forEach(h=>{
+    hotels.innerHTML+=`<div class="hotel">🏨 ${h.display_name.split(",")[0]}</div>`;
   });
-
-  resultBox.innerHTML = html;
 }
 
-/* --- Trigger currency conversion after calculate() runs --- */
-const ORIGINAL_CALC = calculate;
-calculate = function () {
-  ORIGINAL_CALC();
-  updateResultCurrency();
-};
+function calculate(){
+  const dist=+distance.value||0;
+  const fuelCost=(dist/(+mileage.value||1))*(+fuel.value||0);
+  const hotelCost=(+hotel.value||0)*(+nights.value||0);
+  const foodCost=(+food.value||0)*(+travellers.value||1)*(+nights.value||0);
+  const total=fuelCost+hotelCost+foodCost;
 
-/* ============================================================
-   CURRENCY MODAL HANDLERS
-   ============================================================ */
-currencySelect.onchange = () => {
-  localStorage.setItem("ycCurrency", currencySelect.value);
-  currencyModalSelect.value = currencySelect.value;
-  if (resultBox.innerHTML.trim().length > 0) updateResultCurrency();
-};
-
-currencyModalSelect.onchange = () => {
-  localStorage.setItem("ycCurrency", currencyModalSelect.value);
-  currencySelect.value = currencyModalSelect.value;
-  if (resultBox.innerHTML.trim().length > 0) updateResultCurrency();
-};
-
-const savedCurr = localStorage.getItem("ycCurrency");
-if (savedCurr) {
-  currencySelect.value = savedCurr;
-  currencyModalSelect.value = savedCurr;
+  result.innerHTML=`
+    Distance: ${dist} km<br>
+    Fuel: ₹${fuelCost.toFixed(0)}<br>
+    Stay: ₹${hotelCost}<br>
+    Food: ₹${foodCost}<br><hr>
+    <b>Total: ₹${total.toFixed(0)}</b>
+  `;
 }
-
-/* ============================================================
-   CLOSE MODALS WHEN CLICK OUTSIDE
-   ============================================================ */
-window.onclick = (e) => {
-  if (e.target === loginModal) loginModal.style.display = "none";
-  if (e.target === settingsModal) settingsModal.style.display = "none";
-};
-
-/* ============================================================
-   FINAL CHECK: LANGUAGE + CURRENCY LOADING
-   ============================================================ */
-(function initializeFinal() {
-  console.log("YatraCost Pro — All Parts Loaded Successfully ✔");
-
-  // restore language
-  const lang = localStorage.getItem("ycLang") || "en";
-  applyLanguage(lang);
-
-  // restore currency
-  const curr = localStorage.getItem("ycCurrency") || "INR";
-  currencySelect.value = curr;
-  currencyModalSelect.value = curr;
-})();
-
 </script>
 
 </body>
